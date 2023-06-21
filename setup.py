@@ -9,4 +9,4 @@ setup(name='multilayers',
       license='ARCNL',
       packages=['multilayers'],
       zip_safe=False,
-      install_requires=['numpy','scipy','pandas','matplotlib','os','sys',)
+      install_requires=['numpy','scipy','pandas','matplotlib','os','sys'])
