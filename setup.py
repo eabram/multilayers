@@ -8,4 +8,5 @@ setup(name='multilayers',
       author_email='E.abram@arcnl.nl',
       license='ARCNL',
       packages=['multilayers'],
-      zip_safe=False)
+      zip_safe=False,
+      install_requires=['numpy','scipy','pandas','matplotlib','os','sys',)
