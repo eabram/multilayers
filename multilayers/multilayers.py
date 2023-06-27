@@ -4,6 +4,21 @@ import os,sys
 import scipy.integrate
 import pandas as pd
 import scipy.interpolate
+if not sys.warnoptions:
+    import os, warnings
+    warnings.simplefilter("default") # Change the filter in this process
+    os.environ["PYTHONWARNINGS"] = "default" # Also affect subprocesses
+
+import warnings
+
+#warnings.filterwarnings('error')
+#
+#try:
+#    warnings.warn(Warning())
+#except Warning:
+#    print('Warning was raised as an exception!')
+
+
 
 direct_REF_INDEX = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))+os.sep+'Refractive_Index'+os.sep
 
@@ -233,6 +248,13 @@ class ML():
         if j!=len(n)-1:
             dj = d[j-1]
             kd = k0*n2perptilde
+            if (np.real(kd)*dj)>100:
+                dj = 100 / np.real(kd)
+                print(dj)
+                print('Found thick absorbing layer')
+                self.d[j-1] = dj
+                print('Set thick absorbing layer to: '+str(dj))
+
             if j==self.pos_sub and self.backscatter==False:
                 Mj = np.array([[np.exp(-1j*kd*dj),0],[0,0]])
                 Mjz = lambda z: np.array([[np.exp(-1j*kd*z),0],[0,0]])
@@ -245,7 +267,9 @@ class ML():
             Mjz = lambda z: np.array([[1.0,0],[0,1.0]])
             phi = 0.0
             kd = k0
-
+        #if np.abs(Mj[0][0])==np.inf:
+        #    Mj[0][0] = (1+1j)*10e100 # Put in high number to work with
+        
         return Mjm1j, Mj, Mjm1j @ Mj, Mjz
      
     def calc_multilayer(self,labda,n='Default',d='Default',pol='p',ang=0.0):
@@ -264,9 +288,8 @@ class ML():
             M_all.append(M_new)
             M_parts.append(M_new[2])
             M = M @ M_new[2]
-
         [Ein1,Eout1] = np.array(M @ np.array([1.0,0.0]))[0]
-
+        
         R = np.abs((Eout1/Ein1))**2
         r = (Eout1/Ein1)
         try:
@@ -280,6 +303,7 @@ class ML():
         t = (1.0/Ein1)*(nrealend/nrealstart) #...check if this is correct
         ABS = 1.0-T-R
         
+
         return R, T, ABS, r, t, M_parts, M_all
 
 ### Run calculation ###
