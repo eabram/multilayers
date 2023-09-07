@@ -352,9 +352,9 @@ class ML():
             t = np.nansum(t_val)*Dlabda
             M_parts = M_parts_val
             Mz = Mz_val
-
-            abs_func = lambda z: self.get_multiple_abs_wf(z,Mz_val,T_val,d,n,labda_vec)
-
+            
+            abs_func = lambda z: self.get_multiple_abs_wf(z,Mz_val,T_val/dist,d,n,labda_vec)
+            
             Rerr = np.nan
             Terr = np.nan
             rerr = np.nan
@@ -437,12 +437,17 @@ class ML():
     def get_absorption(self,d,M_all,T,d_list,n_list,labda):
         '''Gets the absorption function when option=CW'''
         z = self.get_z_list(d_list,d)
-        absorption = self.get_abs_function(M_all,z,labda,T,n_list)
+        if d>=np.nansum(d_list):
+            absorption = 0
+        elif d<0:
+            absorption = 0
+        else:
+            absorption = self.get_abs_function(M_all,z,labda,T,n_list)
 
         return absorption
 
     def get_multiple_abs_wf(self,z,Mz_val,T_val,d,n,labda_vec):
         '''Gets the absorption function when option=numerical or pulse'''
-        val = np.array([self.get_absorption(z,Mz_val[i],T_val[i],d,n,labda_vec[i])*self.pulse(labda_vec[i]) for i in range(0,len(labda_vec))])
+        val = np.array([self.get_absorption(z,Mz_val[i],T_val[i],d,n,labda_vec[i])*self.pulse(labda_vec[i])*(labda_vec[1]-labda_vec[0]) for i in range(0,len(labda_vec))])
         
-        return np.nansum(val)*(labda_vec[1]-labda_vec[0])
+        return np.nansum(val)
