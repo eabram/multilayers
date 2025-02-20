@@ -61,14 +61,16 @@ class ML():
         fn_all = []
         for (dp, dn, fn) in os.walk(direct):
             for f in fn:
-                fn_all.append(dp+os.sep+f)
-                opt = dp.split(direct)[-1]
-                if fn_all[-1].split(os.sep)[-1].split('.')[0] in k_off:
-                    k_off_sel = True
-                else:
-                    k_off_sel = False
-                n_func, labda, n, k = self.interp_n(fn_all[-1],opt=opt,sel=sel,k_off=k_off_sel)
-                out[fn_all[-1].split(os.sep)[-1].split('.')[0]] = n_func
+                ext = f.split('.')[-1].lower()
+                if ext=='txt' or ext=='csv':
+                    fn_all.append(dp+os.sep+f)
+                    opt = dp.split(direct)[-1]
+                    if fn_all[-1].split(os.sep)[-1].split('.')[0] in k_off:
+                        k_off_sel = True
+                    else:
+                        k_off_sel = False
+                    n_func, labda, n, k = self.interp_n(fn_all[-1],opt=opt,sel=sel,k_off=k_off_sel)
+                    out[fn_all[-1].split(os.sep)[-1].split('.')[0]] = n_func
 
         out['Vacuum'] = lambda labda: 1.0
 
