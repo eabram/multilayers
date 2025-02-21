@@ -300,9 +300,11 @@ class ML():
         except TypeError:
             nrealstart = np.real(n[0])
             nrealend = np.real(n[-1])
-
-        T = (np.abs((1.0/Ein1))**2)*(nrealend/nrealstart)
-        t = (1.0/Ein1)*(nrealend/nrealstart) #...check if this is correct
+        
+        theta_start = ang
+        theta_end = np.arcsin(np.sin(ang)*(nrealstart/nrealend))
+        T = (np.abs((1.0/Ein1))**2)*(nrealend/nrealstart)*(np.cos(theta_end)/np.cos(theta_start))
+        t = (1.0/Ein1)*(nrealend/nrealstart)*((np.cos(theta_end)/np.cos(theta_start))**0.5)
         ABS = 1.0-T-R
         
 
@@ -374,7 +376,7 @@ class ML():
         return R, T, ABS, r, Rerr, Terr, rerr, t, M_parts, Mz, abs_func
 
     def get_pulse(self,labda0='Default',FWHM='Default'):
-        '''Distributio  over the spectrum'''
+        '''Distribution  over the spectrum'''
 
         if labda0=='Default':
             labda0 = self.labda0
