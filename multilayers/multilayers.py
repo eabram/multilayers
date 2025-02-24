@@ -4,6 +4,7 @@ import os,sys
 import scipy.integrate
 import pandas as pd
 import scipy.interpolate
+from typing import Union
 if not sys.warnoptions:
     import os, warnings
     warnings.simplefilter("default") # Change the filter in this process
@@ -23,8 +24,41 @@ import warnings
 direct_REF_INDEX = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))+os.sep+'Refractive_Index'+os.sep
 
 class ML():
-    def __init__(self,n_list=[],d_list=[],labda=800.0e-9,FWHM=50.0e-9,fill_value=np.nan,direct_n=direct_REF_INDEX,k_off=[],pos_sub='Default',n_adjust={},backscatter=False):
-        """Initializes the ML object"""
+    """Class to calculate the reflection, transmission and absorption (profiles) of a light beam through a flat multilayer stack
+
+    Attributes:
+        lambda0: central wavelength
+        n_dict: Gets all n and k values as a function of wavelength
+        n: Selects the n-values per layer from n_dict or imports from n_adjust
+        mat: Material name/handle for each layer
+        d: List of thichnesses for each layer (except for the first and last which are set to infinity)
+        FWHM: The FWHM of the spectrum of the incloming light. This is only included when not CW light is considered
+        pos_sub: the position of the substrate
+        backscatter: If set to False, the backscattering of the the substrate layer (position pos_sub) is swichted off
+
+
+
+        fill_value: ...to adjust
+    """
+
+
+    def __init__(self,n_list:list=[],d_list:list=[],labda:float=800.0e-9,FWHM:float=50.0e-9,fill_value:float=np.nan,direct_n:str=direct_REF_INDEX,k_off:list=[],pos_sub:Union[str,int]='Default',n_adjust:dict={},backscatter:bool=False):
+        """Initializes the ML object
+
+        Args:
+            n_list (list): List of material names in order from top (incoming light side) to bottom
+            d_list (list): List of material thicknesses order from top (incoming light side) to bottom. The first and last material thicknesses are omitted because they are considered infinite (len(d_list) = len(n_list)-2)
+            labda (float): (Central) wavelength
+            FWHM (float): FWHM of the incoming light (omitted when the light is CW)
+            fill_value (float): ...to adjust
+            direct_n (str): Directory of the refractive-index library
+            k_off (list): List of layer indices where the absorption is set off (k set to 0). This is not necessacry of the read in k-value is already zero, however numerically helpfull if k is very small and the thickness large.
+            pos_sub (str/int): Layer index of the substrate material. This is only needed if the backscattering from the backside of the substrate has to be set to 0.
+            n_adjust (dict): When using own specified refractive index values, one can inlude them in this dictionary. The key is the material name, and the value eather a function (vs. wavelength in meters), or a constact.
+            backscatter (bool): If False, set the backscattering from the substrate backsurface off. This can be helpfull wheb considering an unpolished backsurface of the substrate.
+
+        """
+
         self.labda0 = labda # Set central wavelength
         
         # n and k-values
@@ -51,34 +85,58 @@ class ML():
 
 ### Refractive index ###
 
-    def get_n(self,direct=direct_REF_INDEX,sel='model',k_off=[]) -> dict:
+    def get_n(self,direct:str=direct_REF_INDEX,sel:str='model',k_off:list=[]) -> dict:
         """Reads all refractive index values from direct and interpolates those values over the wavelength
 
-        self.interp_n interpolates the nk-values over wavelength"""
+        Args:
+            direct (str): Directory of the refractive-index library
+            sel (str): ...to do
+            k_off (list): List of layer indices where the absorption is set off (k set to 0). This is not necessacry of the read in k-value is already zero, however numerically helpfull if k is very small and the thickness large.
+
+        Returns:
+            out (dict): # Dictionary with all materials as keys holding the interpolated n,k values
+
+        """
         
         print(direct)
         out = {}
         fn_all = []
-        for (dp, dn, fn) in os.walk(direct):
+        for (dp, dn, fn) in os.walk(direct): # Loop over the refrective index library in direct
             for f in fn:
                 ext = f.split('.')[-1].lower()
                 if ext=='txt' or ext=='csv':
                     fn_all.append(dp+os.sep+f)
                     opt = dp.split(direct)[-1]
                     if fn_all[-1].split(os.sep)[-1].split('.')[0] in k_off:
-                        k_off_sel = True
+                        k_off_sel = True #Set absorption off (necessary for numerical accuracy later)
                     else:
-                        k_off_sel = False
-                    n_func, labda, n, k = self.interp_n(fn_all[-1],opt=opt,sel=sel,k_off=k_off_sel)
-                    out[fn_all[-1].split(os.sep)[-1].split('.')[0]] = n_func
+                        k_off_sel = False #Set absorption on
+                    n_func, labda, n, k = self.interp_n(fn_all[-1],opt=opt,sel=sel,k_off=k_off_sel) # Interpolates the listed n and k values into a function
+                    out[fn_all[-1].split(os.sep)[-1].split('.')[0]] = n_func # Saves the interpolated function in the directory with the material name as key.
 
-        out['Vacuum'] = lambda labda: 1.0
+        out['Vacuum'] = lambda labda: 1.0 # refractiv index for vacuum
 
         return out # Dictionary with all materials as keys holding the interpolated n,k values
     
-    def interp_n(self,fn,opt='Site',sel='model',k_off=False):
-        """Interpolates the nk values over wavelength"""
+    def interp_n(self,fn:str,opt:str='Site',sel:str='model',k_off:bool=False) -> list:
+        """Interpolates the nk values over wavelength
 
+        Args:
+            fn (str): Filename of the reported nk values
+            opt (str): Eather 'Site' or 'Ellipsometry', which selects the subfolder of the nk-library. 'Site' is found at online (refractiveindex.org) and 'Ellipsometry' are nk-values obtained by ellipsometry. The deviation is made due to the diffrent structures of the generated nk-files.
+            sel (str): If equal to 'model', a different column in the nk-file is selected.
+            k_off (bool): If True sets the absorption to 0
+
+        Returns:
+            list: List containing:
+                n_func (function): Interpolated function of n +1jk as function of lambda
+                labda (list): Input wavelengt (in meter)
+                n (list): Input real part of the refractive index
+                k (list): Input imaginairy part of the refractive index
+
+        """
+        
+        # Read files from nk-library
         if opt=='Site':
             A = pd.read_csv(fn,sep=';')
             keys = list(A.keys())
@@ -137,6 +195,7 @@ class ML():
                 n = out['n']
                 k = out['k']
         
+        # Obtain a n+1jk function versus wavelength
         labdan = np.where(np.isnan(n),np.nan,labda)
         if self.fill_value=='last':
             fill_value = [x for x in n if np.isnan(x) == False][-1]
@@ -163,7 +222,16 @@ class ML():
         return n_func, labda, n, k
 
     def get_n_value(self,mat: list,n_adjust: dict) -> list:
-        """Selects the proper n_values from n_adjust or from self.n_dict otherwise"""
+        """Selects the proper n_values from n_adjust (adjusted/self-defined nk-values) or from self.n_dict (nk-library) otherwise
+
+        Args:
+            mat (list): List of material names of the stack
+            n_adjust (dict): Directlory with material names as keys and a nk-function or value as value. This is to use values different from the one stored in the nk-library
+
+        Output:
+            n_out(list): List of nk-fuctions (versus lambda in meter) in the order of mat
+
+        """
         ret = []
         for m in mat:
             if m in n_adjust:
@@ -173,8 +241,18 @@ class ML():
 
         return ret
 
-    def get_n_val(self,labda='Default',n='Default') -> list:
-        """Calculates proper n_values per layer for lambda=labda"""
+    def get_n_val(self,labda:Union[str,float]='Default',n:Union[str,dict]='Default') -> list:
+        """Calculates proper n_values per layer for lambda=labda
+
+        Args:
+            lambda (str/float): Wavelength (in meter)
+            n (str/dict): dictionary of n+1jK (refractive index function versus lambda) per key (material)
+
+        Output:
+            n_out (list): List of refractive index values at wavelength lambda
+
+        """
+
         if n=='Default':
             n = self.n
 
@@ -192,8 +270,25 @@ class ML():
         return n_out
 
 ### Multilayer calculation
-    def get_Mij(self,n,d,j,labda='Default',pol='p',ang=0.0):
-        '''Calculate Mij and Mj matrices for all layers'''
+    def get_Mij(self,n:Union[str,dict],d:list,j:int,labda:Union[str,float]='Default',pol:str='p',ang:float=0.0) -> tuple:
+        '''Calculate Mij and Mj matrices for all layers
+
+        Args:
+            n (str/dict): Directory of refracive index functions, or 'Default'
+            d (list): List of layer thicknesses (without the first and second infinite layers)
+            j (int): Index of layer j
+            labda (str/float): Wavelength in meters
+            pol (str): Polarization, eather 'p' or 's'
+            ang (float): Angle of incidence
+
+        Output:
+            tuple: Tuple of
+                Mjm1j (np.matrix): Transfer-matrix between medium j-1 and j
+                Mj (np.matrix): Propagation matrix through material j
+                Mjm1j @ Mj (np.matrix): ...to do
+                Mjz (np.matrix(z)): Propagation matrix versus thickness z
+
+        '''
 
         if labda=='Default':
             labda = self.labda0
@@ -274,8 +369,27 @@ class ML():
         
         return Mjm1j, Mj, Mjm1j @ Mj, Mjz
      
-    def calc_multilayer(self,labda,n='Default',d='Default',pol='p',ang=0.0):
-        '''Caluclates R and T for multilayer system at wavelength labda'''
+    def calc_multilayer(self,labda:Union[str,float],n:Union[str,dict]='Default',d:Union[str,list]='Default',pol:str='p',ang:float=0.0) -> tuple:
+        '''Caluclates R and T for multilayer system at wavelength labda
+
+        Args:
+            labda (str/float): Wavelength in meters
+            n (str/dict): Directory of refracive index functions, or 'Default'
+            d (list): List of layer thicknesses (without the first and second infinite layers)
+            pol (str): Polarization, eather 'p' or 's'
+            ang (float): Angle of incidence
+
+        Output:
+            tuple: Tuple containing:
+                R (float): Intensity of reflection
+                T (float): Intensity of transmission
+                ABS (float): Intensity of absorption
+                r (complex): Reflection (fresnel coefficient)
+                t (complex): Transmission (fresnel coefficient)
+                M_parts (list): List of all Mjm1j @ Mj matrixes
+                M_all (list): List of all [Mjm1j, Mj, Mjm1j @ Mj, Mj]
+
+        '''
 
         if n=='Default':
             n = self.n
@@ -311,13 +425,39 @@ class ML():
         return R, T, ABS, r, t, M_parts, M_all
 
 ### Run calculation ###
-    def run(self,n='Default',d='Default',labda0='Default',FWHM='Default',option='numerical',steps=401,ang=0.0,pol='p',a=3):
+    def run(self,n:Union[str,dict]='Default',d:Union[list,str]='Default',labda0:Union[str,float]='Default',FWHM:Union[str,float]='Default',option:str='numerical',steps:int=401,ang:float=0.0,pol:str='p',a:float=3) -> tuple:
         ''' Runs the calculation to obtain R, T, total basorbed values and absoption profile 
         
-        option = CW # Calculate for labda0 only
-        option = numerical # Samples over spectrum with central wavelength labda0 and FWHM from -a*FWHM to a*FWHM around labda0. Note that when fill_value is for instance set to nan, going outsited te interpolation limits will raise an error. The spectrum is sampled over steps number of steps.
-        option = pulse # Does the same as numerical but then integrating it instead of numerically solving it #...does not work with newest version
+        Args:
+            n (str/dict): Directory of refracive index functions, or 'Default' (=self.n)
+            d (str/list): List of layer thicknesses (without the first and second infinite layers), if ='Default' then it is equal to self.d
+            labda0 (str/float): Wavelength in meters, or 'Default' (=self.labda0)
+            FWHM (str/float): FWHM of the beam in meters, or 'Default' (=self.FWHM)
+            option (str): Selects beam type
+                option = CW # Calculate for labda0 only
+                option = numerical # Samples over spectrum with central wavelength labda0 and FWHM from -a*FWHM to a*FWHM around labda0. Note that when fill_value is for instance set to nan, going outsited te interpolation limits will raise an error. The spectrum is sampled over steps number of steps.
+                option = pulse # Does the same as numerical but then integrating it instead of numerically solving it #...does not work with newest version
+            steps (int): Number of samples between -a*FWHM+lambda and a*FWHM+labda (not workin when option = 'CW')
+            ang (float): Angle of incidence
+            pol (str): Polarization, eather 'p' or 's'
+            a: Selts wavelength sample range (between -a*FWHM+lambda and a*FWHM+labda) (not workin when option = 'CW')
+
+        Output:
+            tuple: tuple containing:
+                R (float): Intensity of reflection
+                T (float): Intensity of transmission
+                ABS (float): Intensity of absorption
+                r (complex): Reflection (fresnel coefficient)
+                Rerr (float): Error of R
+                Terr (float): Error of T
+                rerr (float): Error of r
+                t (complex): Transmission (fresnel coefficient)
+                M_parts (list): List of all Mjm1j @ Mj matrixes
+                Mz :...to do
+                abs_func (float function): Absorption profile versus thickens
+
         '''
+
         self.get_pulse(labda0=labda0,FWHM=FWHM)
         if labda0=='Default':
             labda0 = self.labda0
@@ -375,8 +515,14 @@ class ML():
 
         return R, T, ABS, r, Rerr, Terr, rerr, t, M_parts, Mz, abs_func
 
-    def get_pulse(self,labda0='Default',FWHM='Default'):
-        '''Distribution  over the spectrum'''
+    def get_pulse(self,labda0:Union[str,float]='Default',FWHM:Union[str,float]=='Default'):
+        '''Distribution  over the spectrum, saves self.pulse as the spectrum
+
+        Args:
+            labda0 (str/float): Wavelength in meters, or 'Default' (=self.labda0)
+            FWHM (str/float): FWHM of the beam in meters, or 'Default' (=self.FWHM)
+
+        '''
 
         if labda0=='Default':
             labda0 = self.labda0
@@ -391,9 +537,17 @@ class ML():
 
         return 0
     
-#--- ABSORPTION --- #..maybe only for normal incidence
-    def get_z_list(self,d_list,d):
-        ''' Get z-values for each layer seen from the transmission side as function of position d into the material'''
+#--- ABSORPTION PROFILE --- #..maybe only for normal incidence
+    def get_z_list(self,d_list:list,d:float) -> list:
+        ''' Get z-values for each layer seen from the transmission side as function of position d into the material
+
+        Args:
+            d_list (list): List of layer thicknesses (without the first and second infinite layers)
+            d (float); depth-coordinate in the layer
+
+        Output:
+            z_list (list): List of passed thicknesses of each layer at d
+        '''
         d_list = np.array(d_list,dtype='float64')
         z_list = np.nan*d_list
         d_tot = np.nansum(d_list)
@@ -413,10 +567,22 @@ class ML():
 
         return z_list
 
-    def get_abs_function(self,M_all,z,labda,T,n_list):
-        '''Get the absorbtion as function fo z
+    def get_abs_function(self,M_all:list,z:float,labda:float,T:float,n_list:Union[str,dict]) -> float:
+        '''Get the absorbtion as function of z
 
-        Note: This may only hold for normal incidence. Source: Klaasjan'''
+        Note: This may only hold for normal incidence. Source: Klaasjan...
+
+        Args:
+            M_all (list): List of all [Mjm1j, Mj, Mjm1j @ Mj, Mj]
+            z (float):Depth coordinate in the layer
+            labda (float): Wavelegth in meters
+            T (float): Intesity of transmission (total)
+            n_list (str/dict): Dictionary of n+1jK (refractive index function versus lambda) per key (material)
+
+        Output:
+            absorption (float): Absorption profile value at z
+
+        '''
 
         n_val = self.get_n_val(labda=labda,n=n_list)
         M_tot = np.array([[1.0,0],[0,1.0]])
@@ -438,8 +604,21 @@ class ML():
         return absorbed
 
 
-    def get_absorption(self,d,M_all,T,d_list,n_list,labda):
-        '''Gets the absorption function when option=CW'''
+    def get_absorption(self,d:float,M_all:list,T:float,d_list:list,n_list:Union[str,list],labda:float) -> float:
+        '''Gets the absorption function when option=CW...
+
+        Args:
+            d (float): Depth into the stack
+            M_all (list): List of matrices
+            T (float): Intensity of transmission of the stack
+            d_list (list): List of layer thicknesses (without the first and second infinite layers)
+            n_list (str/dict): Dictionary of n+1jK (refractive index function versus lambda) per key (material)
+            labda (float): Wavelength in meters
+
+        Output:
+            absorption (float): Absorption profile value at z            
+
+        '''
         z = self.get_z_list(d_list,d)
         if d>=np.nansum(d_list):
             absorption = 0
@@ -450,8 +629,21 @@ class ML():
 
         return absorption
 
-    def get_multiple_abs_wf(self,z,Mz_val,T_val,d,n,labda_vec):
-        '''Gets the absorption function when option=numerical or pulse'''
+    def get_multiple_abs_wf(self,z:float,Mz_val:list,T_val:list,d:list,n:Union[str,dict],labda_vec:np.arary) -> float:
+        '''Gets the absorption function when option=numerical or pulse
+
+        Args:
+            z (float): Depth into the stack
+            Mz_val (list): List of matrices
+            T_val (list): List of intensity of transmission of the stack for eveery value in labda_vec
+            d (list): List of layer thicknesses (without the first and second infinite layers)
+            n (str/dict): Dictionary of n+1jK (refractive index function versus lambda) per key (material)
+            labda_vec (list): List of wavelenths in meters
+
+        Output:
+            absorption (float): Absorption profile value at z      
+
+        '''
         val = np.array([self.get_absorption(z,Mz_val[i],T_val[i],d,n,labda_vec[i])*self.pulse(labda_vec[i])*(labda_vec[1]-labda_vec[0]) for i in range(0,len(labda_vec))])
         
         return np.nansum(val)

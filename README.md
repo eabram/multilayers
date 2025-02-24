@@ -23,7 +23,7 @@ in order to be able to generate the documentation as well. This is not required 
 
 Examples are included as ipynb-files in [this folder](Examples)
 
-#Acknowledgements
+# Acknowledgements
 
 This work is based on the Tranfer-Matrix Method calculations worked out by Klaasjan van Druten
 
