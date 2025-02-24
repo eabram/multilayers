@@ -7,9 +7,10 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import sys
+import os
+import importlib.metadata
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-import os
 
 project = 'Multilayers'
 copyright = '2025, Advanced Research Center for Nanolithography (ARCNL)'
@@ -34,9 +35,9 @@ apidoc.main(cmd_line.split(" ")[1:])
 
 #extensions = []
 extensions = [
-    "sphinx.ext.duration",
-    "sphinx.ext.doctest",
     "sphinx.ext.autodoc",
+    "sphinx_autodoc_defaultargs",
+    "sphinx_autodoc_typehints",
 ]
 
 typehints_use_rtype = False

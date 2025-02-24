@@ -30,13 +30,308 @@
 
           <div class="body" role="main">
             
-  <section id="multilayers-package">
-<h1>multilayers package<a class="headerlink" href="#multilayers-package" title="Link to this heading">¶</a></h1>
+  <section id="module-multilayers">
+<span id="multilayers-package"></span><h1>multilayers package<a class="headerlink" href="#module-multilayers" title="Link to this heading">¶</a></h1>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 </section>
-<section id="multilayers-multilayers-module">
-<h2>multilayers.multilayers module<a class="headerlink" href="#multilayers-multilayers-module" title="Link to this heading">¶</a></h2>
+<section id="module-multilayers.multilayers">
+<span id="multilayers-multilayers-module"></span><h2>multilayers.multilayers module<a class="headerlink" href="#module-multilayers.multilayers" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">multilayers.multilayers.</span></span><span class="sig-name descname"><span class="pre">ML</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8e-07</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">FWHM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direct_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'/media/sf_Documents/Code/Multilayers/Refractive_Index/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_off</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_adjust</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backscatter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML" title="Link to this definition">¶</a></dt>
+<dd><p>Class to calculate the reflection, transmission and absorption (profiles) of a light beam through a flat multilayer stack</p>
+<dl>
+<dt>Attributes:</dt><dd><p>lambda0: central wavelength
+n_dict: Gets all n and k values as a function of wavelength
+n: Selects the n-values per layer from n_dict or imports from n_adjust
+mat: Material name/handle for each layer
+d: List of thichnesses for each layer (except for the first and last which are set to infinity)
+FWHM: The FWHM of the spectrum of the incloming light. This is only included when not CW light is considered
+pos_sub: the position of the substrate
+backscatter: If set to False, the backscattering of the the substrate layer (position pos_sub) is swichted off</p>
+<p>fill_value: …to adjust</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.calc_multilayer">
+<span class="sig-name descname"><span class="pre">calc_multilayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labda</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'p'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.calc_multilayer" title="Link to this definition">¶</a></dt>
+<dd><p>Caluclates R and T for multilayer system at wavelength labda</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>labda (str/float): Wavelength in meters
+n (str/dict): Directory of refracive index functions, or ‘Default’
+d (list): List of layer thicknesses (without the first and second infinite layers)
+pol (str): Polarization, eather ‘p’ or ‘s’
+ang (float): Angle of incidence</p>
+</dd>
+<dt>Output:</dt><dd><dl class="simple">
+<dt>tuple: Tuple containing:</dt><dd><p>R (float): Intensity of reflection
+T (float): Intensity of transmission
+ABS (float): Intensity of absorption
+r (complex): Reflection (fresnel coefficient)
+t (complex): Transmission (fresnel coefficient)
+M_parts (list): List of all Mjm1j &#64; Mj matrixes
+M_all (list): List of all [Mjm1j, Mj, Mjm1j &#64; Mj, Mj]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.get_Mij">
+<span class="sig-name descname"><span class="pre">get_Mij</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'p'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.get_Mij" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate Mij and Mj matrices for all layers</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>n (str/dict): Directory of refracive index functions, or ‘Default’
+d (list): List of layer thicknesses (without the first and second infinite layers)
+j (int): Index of layer j
+labda (str/float): Wavelength in meters
+pol (str): Polarization, eather ‘p’ or ‘s’
+ang (float): Angle of incidence</p>
+</dd>
+<dt>Output:</dt><dd><dl class="simple">
+<dt>tuple: Tuple of</dt><dd><p>Mjm1j (np.matrix): Transfer-matrix between medium j-1 and j
+Mj (np.matrix): Propagation matrix through material j
+Mjm1j &#64; Mj (np.matrix): …to do
+Mjz (np.matrix(z)): Propagation matrix versus thickness z</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.get_abs_function">
+<span class="sig-name descname"><span class="pre">get_abs_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M_all</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labda</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.get_abs_function" title="Link to this definition">¶</a></dt>
+<dd><p>Get the absorbtion as function of z</p>
+<p>Note: This may only hold for normal incidence. Source: Klaasjan…</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>M_all (list): List of all [Mjm1j, Mj, Mjm1j &#64; Mj, Mj]
+z (float):Depth coordinate in the layer
+labda (float): Wavelegth in meters
+T (float): Intesity of transmission (total)
+n_list (str/dict): Dictionary of n+1jK (refractive index function versus lambda) per key (material)</p>
+</dd>
+<dt>Output:</dt><dd><p>absorption (float): Absorption profile value at z</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.get_absorption">
+<span class="sig-name descname"><span class="pre">get_absorption</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M_all</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labda</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.get_absorption" title="Link to this definition">¶</a></dt>
+<dd><p>Gets the absorption function when option=CW…</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>d (float): Depth into the stack
+M_all (list): List of matrices
+T (float): Intensity of transmission of the stack
+d_list (list): List of layer thicknesses (without the first and second infinite layers)
+n_list (str/dict): Dictionary of n+1jK (refractive index function versus lambda) per key (material)
+labda (float): Wavelength in meters</p>
+</dd>
+<dt>Output:</dt><dd><p>absorption (float): Absorption profile value at z</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.get_multiple_abs_wf">
+<span class="sig-name descname"><span class="pre">get_multiple_abs_wf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mz_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labda_vec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.get_multiple_abs_wf" title="Link to this definition">¶</a></dt>
+<dd><p>Gets the absorption function when option=numerical or pulse</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>z (float): Depth into the stack
+Mz_val (list): List of matrices
+T_val (list): List of intensity of transmission of the stack for eveery value in labda_vec
+d (list): List of layer thicknesses (without the first and second infinite layers)
+n (str/dict): Dictionary of n+1jK (refractive index function versus lambda) per key (material)
+labda_vec (list): List of wavelenths in meters</p>
+</dd>
+<dt>Output:</dt><dd><p>absorption (float): Absorption profile value at z</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.get_n">
+<span class="sig-name descname"><span class="pre">get_n</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'/media/sf_Documents/Code/Multilayers/Refractive_Index/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_off</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.get_n" title="Link to this definition">¶</a></dt>
+<dd><p>Reads all refractive index values from direct and interpolates those values over the wavelength</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>direct (str): Directory of the refractive-index library
+sel (str): …to do
+k_off (list): List of layer indices where the absorption is set off (k set to 0). This is not necessacry of the read in k-value is already zero, however numerically helpfull if k is very small and the thickness large.</p>
+</dd>
+<dt>Returns:</dt><dd><p>out (dict): # Dictionary with all materials as keys holding the interpolated n,k values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.get_n_val">
+<span class="sig-name descname"><span class="pre">get_n_val</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.get_n_val" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates proper n_values per layer for lambda=labda</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>lambda (str/float): Wavelength (in meter)
+n (str/dict): dictionary of n+1jK (refractive index function versus lambda) per key (material)</p>
+</dd>
+<dt>Output:</dt><dd><p>n_out (list): List of refractive index values at wavelength lambda</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.get_n_value">
+<span class="sig-name descname"><span class="pre">get_n_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_adjust</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.get_n_value" title="Link to this definition">¶</a></dt>
+<dd><p>Selects the proper n_values from n_adjust (adjusted/self-defined nk-values) or from self.n_dict (nk-library) otherwise</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>mat (list): List of material names of the stack
+n_adjust (dict): Directlory with material names as keys and a nk-function or value as value. This is to use values different from the one stored in the nk-library</p>
+</dd>
+<dt>Output:</dt><dd><p>n_out(list): List of nk-fuctions (versus lambda in meter) in the order of mat</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.get_pulse">
+<span class="sig-name descname"><span class="pre">get_pulse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labda0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">FWHM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.get_pulse" title="Link to this definition">¶</a></dt>
+<dd><p>Distribution  over the spectrum, saves self.pulse as the spectrum</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>labda0 (str/float): Wavelength in meters, or ‘Default’ (=self.labda0)
+FWHM (str/float): FWHM of the beam in meters, or ‘Default’ (=self.FWHM)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.get_z_list">
+<span class="sig-name descname"><span class="pre">get_z_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.get_z_list" title="Link to this definition">¶</a></dt>
+<dd><p>Get z-values for each layer seen from the transmission side as function of position d into the material</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>d_list (list): List of layer thicknesses (without the first and second infinite layers)
+d (float); depth-coordinate in the layer</p>
+</dd>
+<dt>Output:</dt><dd><p>z_list (list): List of passed thicknesses of each layer at d</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.interp_n">
+<span class="sig-name descname"><span class="pre">interp_n</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Site'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_off</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.interp_n" title="Link to this definition">¶</a></dt>
+<dd><p>Interpolates the nk values over wavelength</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>fn (str): Filename of the reported nk values
+opt (str): Eather ‘Site’ or ‘Ellipsometry’, which selects the subfolder of the nk-library. ‘Site’ is found at online (refractiveindex.org) and ‘Ellipsometry’ are nk-values obtained by ellipsometry. The deviation is made due to the diffrent structures of the generated nk-files.
+sel (str): If equal to ‘model’, a different column in the nk-file is selected.
+k_off (bool): If True sets the absorption to 0</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>list: List containing:</dt><dd><p>n_func (function): Interpolated function of n +1jk as function of lambda
+labda (list): Input wavelengt (in meter)
+n (list): Input real part of the refractive index
+k (list): Input imaginairy part of the refractive index</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="multilayers.multilayers.ML.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labda0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">FWHM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">option</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'numerical'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">401</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'p'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#multilayers.multilayers.ML.run" title="Link to this definition">¶</a></dt>
+<dd><p>Runs the calculation to obtain R, T, total basorbed values and absoption profile</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><p>n (str/dict): Directory of refracive index functions, or ‘Default’ (=self.n)
+d (str/list): List of layer thicknesses (without the first and second infinite layers), if =’Default’ then it is equal to self.d
+labda0 (str/float): Wavelength in meters, or ‘Default’ (=self.labda0)
+FWHM (str/float): FWHM of the beam in meters, or ‘Default’ (=self.FWHM)
+option (str): Selects beam type</p>
+<blockquote>
+<div><p>option = CW # Calculate for labda0 only
+option = numerical # Samples over spectrum with central wavelength labda0 and FWHM from -a*FWHM to a*FWHM around labda0. Note that when fill_value is for instance set to nan, going outsited te interpolation limits will raise an error. The spectrum is sampled over steps number of steps.
+option = pulse # Does the same as numerical but then integrating it instead of numerically solving it #…does not work with newest version</p>
+</div></blockquote>
+<p>steps (int): Number of samples between -a*FWHM+lambda and a*FWHM+labda (not workin when option = ‘CW’)
+ang (float): Angle of incidence
+pol (str): Polarization, eather ‘p’ or ‘s’
+a: Selts wavelength sample range (between -a*FWHM+lambda and a*FWHM+labda) (not workin when option = ‘CW’)</p>
+</dd>
+<dt>Output:</dt><dd><dl class="simple">
+<dt>tuple: tuple containing:</dt><dd><p>R (float): Intensity of reflection
+T (float): Intensity of transmission
+ABS (float): Intensity of absorption
+r (complex): Reflection (fresnel coefficient)
+Rerr (float): Error of R
+Terr (float): Error of T
+rerr (float): Error of r
+t (complex): Transmission (fresnel coefficient)
+M_parts (list): List of all Mjm1j &#64; Mj matrixes
+Mz :…to do
+abs_func (float function): Absorption profile versus thickens</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 

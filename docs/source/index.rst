@@ -14,7 +14,6 @@ The **Multilayer** package is a package to calculate the reflection, transmissio
    :caption: Contents:
 
 modules
-multilayers
 
 Indices and tables
 ==================

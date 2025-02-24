@@ -515,7 +515,7 @@ class ML():
 
         return R, T, ABS, r, Rerr, Terr, rerr, t, M_parts, Mz, abs_func
 
-    def get_pulse(self,labda0:Union[str,float]='Default',FWHM:Union[str,float]=='Default'):
+    def get_pulse(self,labda0:Union[str,float]='Default',FWHM:Union[str,float]='Default'):
         '''Distribution  over the spectrum, saves self.pulse as the spectrum
 
         Args:
@@ -629,7 +629,7 @@ class ML():
 
         return absorption
 
-    def get_multiple_abs_wf(self,z:float,Mz_val:list,T_val:list,d:list,n:Union[str,dict],labda_vec:np.arary) -> float:
+    def get_multiple_abs_wf(self,z:float,Mz_val:list,T_val:list,d:list,n:Union[str,dict],labda_vec:np.array) -> float:
         '''Gets the absorption function when option=numerical or pulse
 
         Args:
