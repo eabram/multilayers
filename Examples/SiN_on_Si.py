@@ -13,8 +13,8 @@ plt.rcParams.update({'lines.markersize':5,'font.size':40,'lines.linewidth':3,'le
 
 labda0=400.0e-9 #nm
 FWHM=20.0e-9 
-#option='CW'
-option='numerical'
+option='CW'
+#option='numerical'
 
 direct_save = os.path.dirname(__file__)+os.sep+'Figures'+os.sep
 
@@ -28,9 +28,10 @@ d=[20.0e-9,4.0e-9,2000.0e-9] #Thickness of materials, except for the first and l
 #k_off = ['BK7','BK7_Cauchy']
 k_off = []
 steps = 51
-ang = 0.0
+ang = 0.25*np.pi
+pol = 'p'
 ml = multilayers.ML(n_list=n,d_list=d,labda=labda0,FWHM=FWHM,k_off=k_off,backscatter=False)
-R = lambda dsin: ml.run(d=[dsin,d[1],d[2]],option=option,steps=steps,ang=0.0,pol='p') #option: 'numerical' wil integrate over steps and 'pulse' will integrate over a incoming pulse (scipy.integrate.quad)
+R = lambda dsin: ml.run(d=[dsin,d[1],d[2]],option=option,steps=steps,ang=ang,pol=pol) #option: 'numerical' wil integrate over steps and 'pulse' will integrate over a incoming pulse (scipy.integrate.quad)
 
 # dSi
 f,ax = plt.subplots(1,1,figsize=(14,14))

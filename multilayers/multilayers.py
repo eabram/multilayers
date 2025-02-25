@@ -37,12 +37,12 @@ class ML():
         FWHM: The FWHM of the spectrum of the incloming light. This is only included when not CW light is considered
         pos_sub: the position of the substrate
         backscatter: If set to False, the backscattering of the the substrate layer (position pos_sub) is swichted off
-        printon (bool): Prints output statments
+        absorb0 (list): list containing information to handle print statments
         fill_value (float): Uses this value for the n+1jk value for lambda outside the interpolation range
     """
 
 
-    def __init__(self,n_list:list=[],d_list:list=[],labda:float=800.0e-9,FWHM:float=50.0e-9,fill_value:float=np.nan,direct_n:str=direct_REF_INDEX,k_off:list=[],pos_sub:Union[str,int]='Default',n_adjust:dict={},backscatter:bool=False,printon:bool=True):
+    def __init__(self,n_list:list=[],d_list:list=[],labda:float=800.0e-9,FWHM:float=50.0e-9,fill_value:float=np.nan,direct_n:str=direct_REF_INDEX,k_off:list=[],pos_sub:Union[str,int]='Default',n_adjust:dict={},backscatter:bool=False):
         """Initializes the ML object
 
         Args:
@@ -56,7 +56,6 @@ class ML():
             pos_sub (str/int): Layer index of the substrate material. This is only needed if the backscattering from the backside of the substrate has to be set to 0.
             n_adjust (dict): When using own specified refractive index values, one can inlude them in this dictionary. The key is the material name, and the value eather a function (vs. wavelength in meters), or a constact.
             backscatter (bool): If False, set the backscattering from the substrate backsurface off. This can be helpfull wheb considering an unpolished backsurface of the substrate.
-            printon (bool): Prints output statments
 
         """
 
@@ -72,7 +71,7 @@ class ML():
         self.d = d_list # Thicknesses for the layers. Omitten first and second infinite layers
         self.FWHM = FWHM # FWHM of spectrum, not important when option='CW'
         self.backscatter=backscatter # If True, backscatter from the substrate is considered, otherwise not
-        self.printon = printon
+        self.absorb0 = []
 
         #Position of the substrate
         if type(pos_sub)!=str:
@@ -365,10 +364,11 @@ class ML():
             if (np.real(kd)*dj)>100:
                 dj = 100 / np.real(kd)
                 self.d[j-1] = dj
-                if self.printon==True:
+                if j not in self.absorb0:
                     print(dj)
                     print('Found thick absorbing layer')
                     print('Set thick absorbing layer to: '+str(dj))
+                    self.absorb0.append(j)
 
             if j==self.pos_sub and self.backscatter==False:
                 Mj = np.array([[np.exp(-1j*kd*dj),0],[0,0]])
@@ -588,8 +588,6 @@ class ML():
         if FWHM=='Default':
             FWHM = self.FWHM
         
-        printon = self.printon
-        
         if option=='pulse':
             pass
             #R_func = lambda labda: self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)[0]*self.pulse(labda)
@@ -608,7 +606,6 @@ class ML():
             dist = np.array([self.pulse(labda) for labda in labda_vec])
             Dlabda = labda_vec[1]-labda_vec[0]
             scale = 1.0/(np.nansum(dist)*Dlabda) # This should be 1 for plroperly sampling over lambda, but compensates for undersampling
-            self.printon = False
             #val_names = ['R','T','ABS','r','t','M_parts','Mz']
             #for name in val_names:
             #    locals()[name+'_val'] = []
@@ -672,10 +669,6 @@ class ML():
             out[name] = []
         
         for labda in labda_vec:
-            if labda == labda0:
-                self.printon=True
-            else:
-                self.printon=False
             R_l, T_l, ABS_l, r_l, Rerr_l, Terr_l, rerr_l, t_l, M_parts_l, Mz_l, abs_func_l = self.run_CW(n=n,d=d,labda=labda,FWHM=FWHM,steps=steps,ang=ang,pol=pol,a=a)
             for name in names:
                 out_lists[name].append(locals()[name+'_l'])
@@ -701,8 +694,6 @@ class ML():
                 out[name] = valout
             
             out['abs_func'] = lambda z: self.get_multiple_abs_wf(z,out_lists['Mz'],np.array(out_lists['T']),d,n,labda_vec)
-
-        self.printon = printon # Restores setting
 
         return out['R'], out['T'], out['ABS'], out['r'], out['Rerr'], out['Terr'], out['rerr'], out['t'], out['M_parts'], out['Mz'], out['abs_func']
     

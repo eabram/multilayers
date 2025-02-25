@@ -13,14 +13,18 @@ plt.rcParams.update({'lines.markersize':5,'font.size':40,'lines.linewidth':3,'le
 
 labda0=400.0e-9 #nm
 FWHM=50.0e-9 
-option='CW'
+#option='CW'
+option='numerical'
+steps = 5
+ang = 0.25*np.pi
+pol = 'p'
 
 direct_save = os.path.dirname(__file__)+os.sep+'Figures'+os.sep
 
 header = ['dAl','R','T','a']
 
 # Al thickness
-fn = 'BK7500mu_BSTrue'
+fn = 'BK7500mu_BSTrue_'+option
 n=['Air','Al2O3','Al','BK7','Air'] # Materials
 n_adjust = {'Air':1.0, 'Al2O3':1.7865, 'Al': 0.31448+1j*3.8005,'BK7': 1.4701}
 #n=['Air','Al','BK7','Air'] # Materials
@@ -28,10 +32,8 @@ n_adjust = {'Air':1.0, 'Al2O3':1.7865, 'Al': 0.31448+1j*3.8005,'BK7': 1.4701}
 d=[4.0e-9,16.0e-9,0.0005] #Thickness of materials, except for the first and last one (they are infinite)
 #k_off = ['BK7','BK7_Cauchy']
 k_off = []
-steps = 1
-ang = 0.0
 ml = multilayers.ML(n_list=n,d_list=d,labda=labda0,FWHM=FWHM,k_off=k_off,n_adjust=n_adjust,backscatter=True)
-R = lambda dal: ml.run(d=[d[0],dal,d[-1]],option=option,steps=steps,ang=0.0,pol='p')[0:3] #option: 'numerical' wil integrate over steps and 'pulse' will integrate over a incoming pulse (scipy.integrate.quad)
+R = lambda dal: ml.run(d=[d[0],dal,d[-1]],option=option,steps=steps,ang=ang,pol=pol)[0:3] #option: 'numerical' wil integrate over steps and 'pulse' will integrate over a incoming pulse (scipy.integrate.quad)
 
 # dAl
 f,ax = plt.subplots(1,1,figsize=(14,14))
@@ -62,8 +64,6 @@ print('Saved: '+ direct_save+fn+'.png')
 out = np.transpose(np.array([dal_vec,R_vec[:,0],R_vec[:,1],R_vec[:,2]]))
 #pd.DataFrame(out).to_csv(direct_save+fn+'.csv',header=header,index=False)
 
-option='CW'
-
 # Al thickness
 fn = 'BK7500mu_BSTrue'
 n=['Air','Al2O3','Al','BK7','Air'] # Materials
@@ -74,8 +74,6 @@ d=[4.0e-9,16.0e-9,0.0005] #Thickness of materials, except for the first and last
 #k_off = ['BK7','BK7_Cauchy']
 k_off = []
 steps = 401
-ang = 0.0
-pol = 'p'
 #ml = multilayers.ML(n_list=n,d_list=d,labda=labda0,FWHM=FWHM,k_off=k_off,n_adjust=n_adjust,backscatter=True)
 ml = multilayers.ML(n_list=n,d_list=d,labda=labda0,FWHM=FWHM,k_off=k_off,backscatter=True)
 
@@ -91,8 +89,6 @@ d=[0.0e-9,20.0e-9,0.0005] #Thickness of materials, except for the first and last
 #k_off = ['BK7','BK7_Cauchy']
 k_off = []
 steps = 401
-ang = 0.0
-pol = 'p'
 ml = multilayers.ML(n_list=n,d_list=d,labda=labda0,FWHM=FWHM,k_off=k_off,n_adjust=n_adjust,backscatter=True)
 R2 = ml.run(d=d,option=option,steps=steps,ang=ang,pol=pol) #option: 'numerical' wil integrate over steps and 'pulse' will integrate over a incoming pulse (scipy.integrate.quad)
 
@@ -113,6 +109,6 @@ ax.set_xlabel('Depth (nm)')
 ax.set_ylabel('Absorption (nm-1)')
 ax.yaxis.set_major_locator(MultipleLocator(0.002))
 
-fn = 'Example_absoption_profile'
+fn = 'Example_absoption_profile_'+option
 f.savefig(direct_save+fn+'.png',bbox_inches='tight')
 print('Saved: '+ direct_save+fn+'.png')
