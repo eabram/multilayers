@@ -11,7 +11,7 @@ if not sys.warnoptions:
     os.environ["PYTHONWARNINGS"] = "default" # Also affect subprocesses
 
 import warnings
-
+warnings.filterwarnings('ignore', category=PendingDeprecationWarning) # Ignores the np.matrix use warning
 #warnings.filterwarnings('error')
 #
 #try:
@@ -19,7 +19,9 @@ import warnings
 #except Warning:
 #    print('Warning was raised as an exception!')
 
-
+print()
+print()
+print()
 
 direct_REF_INDEX = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir))+os.sep+'Refractive_Index'+os.sep
 
@@ -35,14 +37,12 @@ class ML():
         FWHM: The FWHM of the spectrum of the incloming light. This is only included when not CW light is considered
         pos_sub: the position of the substrate
         backscatter: If set to False, the backscattering of the the substrate layer (position pos_sub) is swichted off
-
-
-
-        fill_value: ...to adjust
+        printon (bool): Prints output statments
+        fill_value (float): Uses this value for the n+1jk value for lambda outside the interpolation range
     """
 
 
-    def __init__(self,n_list:list=[],d_list:list=[],labda:float=800.0e-9,FWHM:float=50.0e-9,fill_value:float=np.nan,direct_n:str=direct_REF_INDEX,k_off:list=[],pos_sub:Union[str,int]='Default',n_adjust:dict={},backscatter:bool=False):
+    def __init__(self,n_list:list=[],d_list:list=[],labda:float=800.0e-9,FWHM:float=50.0e-9,fill_value:float=np.nan,direct_n:str=direct_REF_INDEX,k_off:list=[],pos_sub:Union[str,int]='Default',n_adjust:dict={},backscatter:bool=False,printon:bool=True):
         """Initializes the ML object
 
         Args:
@@ -56,6 +56,7 @@ class ML():
             pos_sub (str/int): Layer index of the substrate material. This is only needed if the backscattering from the backside of the substrate has to be set to 0.
             n_adjust (dict): When using own specified refractive index values, one can inlude them in this dictionary. The key is the material name, and the value eather a function (vs. wavelength in meters), or a constact.
             backscatter (bool): If False, set the backscattering from the substrate backsurface off. This can be helpfull wheb considering an unpolished backsurface of the substrate.
+            printon (bool): Prints output statments
 
         """
 
@@ -71,6 +72,7 @@ class ML():
         self.d = d_list # Thicknesses for the layers. Omitten first and second infinite layers
         self.FWHM = FWHM # FWHM of spectrum, not important when option='CW'
         self.backscatter=backscatter # If True, backscatter from the substrate is considered, otherwise not
+        self.printon = printon
 
         #Position of the substrate
         if type(pos_sub)!=str:
@@ -82,6 +84,7 @@ class ML():
             print('Will not consider backscattering from substrate')
         
         print('Initialization Done')
+        print()
 
 ### Refractive index ###
 
@@ -289,7 +292,6 @@ class ML():
                 Mjz (np.matrix(z)): Propagation matrix versus thickness z
 
         '''
-
         if labda=='Default':
             labda = self.labda0
         
@@ -298,7 +300,21 @@ class ML():
         n0 = n_val[0]
         n1 = n_val[j-1]
         n2 = n_val[j]
-        
+
+        try: 
+            n0 = n0(labda)
+        except:
+            try:
+                n1 = n1(labda)
+            except:
+                try:
+                    n2 = n2(labda)
+                except:
+                    pass
+
+        if 'function' in str(type(n2)):
+            n2 = n2(labda)
+
         realn1 = np.real(n1)
         realn2 = np.real(n2)
         imagn1 = np.imag(n1)
@@ -341,16 +357,18 @@ class ML():
         t = 2.0/(alpha+beta)
         
         Mjm1j=np.matrix([[(alpha+beta)/2.0, (alpha-beta)/2.0],[(alpha-beta)/2.0, (alpha+beta)/2.0]])
+        #Mjm1j=np.array([[(alpha+beta)/2.0, (alpha-beta)/2.0],[(alpha-beta)/2.0, (alpha+beta)/2.0]])
 
         if j!=len(n)-1:
             dj = d[j-1]
             kd = k0*n2perptilde
             if (np.real(kd)*dj)>100:
                 dj = 100 / np.real(kd)
-                print(dj)
-                print('Found thick absorbing layer')
                 self.d[j-1] = dj
-                print('Set thick absorbing layer to: '+str(dj))
+                if self.printon==True:
+                    print(dj)
+                    print('Found thick absorbing layer')
+                    print('Set thick absorbing layer to: '+str(dj))
 
             if j==self.pos_sub and self.backscatter==False:
                 Mj = np.array([[np.exp(-1j*kd*dj),0],[0,0]])
@@ -369,11 +387,11 @@ class ML():
         
         return Mjm1j, Mj, Mjm1j @ Mj, Mjz
      
-    def calc_multilayer(self,labda:Union[str,float],n:Union[str,dict]='Default',d:Union[str,list]='Default',pol:str='p',ang:float=0.0) -> tuple:
+    def calc_multilayer(self,labda:float,n:Union[str,dict]='Default',d:Union[str,list]='Default',pol:str='p',ang:float=0.0) -> tuple:
         '''Caluclates R and T for multilayer system at wavelength labda
 
         Args:
-            labda (str/float): Wavelength in meters
+            labda (float): Wavelength in meters
             n (str/dict): Directory of refracive index functions, or 'Default'
             d (list): List of layer thicknesses (without the first and second infinite layers)
             pol (str): Polarization, eather 'p' or 's'
@@ -398,6 +416,7 @@ class ML():
         
         M = np.array([[1.0,0.0],[0.0,1.0]])
         M_parts = [np.matrix(M)]
+        #M_parts = [np.array(M)]
         M_all = []
         for j in range(1,len(n)):
             M_new = self.get_Mij(n,d,j,labda=labda,pol=pol,ang=ang)
@@ -425,7 +444,8 @@ class ML():
         return R, T, ABS, r, t, M_parts, M_all
 
 ### Run calculation ###
-    def run(self,n:Union[str,dict]='Default',d:Union[list,str]='Default',labda0:Union[str,float]='Default',FWHM:Union[str,float]='Default',option:str='numerical',steps:int=401,ang:float=0.0,pol:str='p',a:float=3) -> tuple:
+    
+    def run_backup(self,n:Union[str,dict]='Default',d:Union[list,str]='Default',labda0:Union[str,float]='Default',FWHM:Union[str,float]='Default',option:str='numerical',steps:int=401,ang:float=0.0,pol:str='p',a:float=3) -> tuple:
         ''' Runs the calculation to obtain R, T, total basorbed values and absoption profile 
         
         Args:
@@ -479,15 +499,29 @@ class ML():
         elif option=='numerical':
             labda_vec = np.linspace(labda0-a*FWHM,labda0+a*FWHM,steps)
             dist = np.array([self.pulse(labda) for labda in labda_vec])
-            val = np.array([np.array(self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)) for labda in labda_vec])
+            val_names = ['R','T','ABS','r','t','M_parts','Mz']
+            for name in val_names:
+                locals()[name+'_val'] = []
 
-            R_val = val[:,0]*dist
-            T_val = val[:,1]*dist
-            ABS_val = val[:,2]*dist
-            r_val = val[:,3]*dist
-            t_val = val[:,4]*dist
-            M_parts_val = val[:,5]
-            Mz_val = val[:,6]
+            for labda in labda_vec:
+                val = self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)
+                for i in range(0,len(val)):
+                    locals()[val_names[i]+'_val'].append(val[i])
+            
+            for i in len(val_names):
+                name = val_names[i]+'_val'
+                if name[0]!=M:
+                    val = locals()[val_names[i]+'_val']
+                    locals()[val_names[i]+'_val'] = val*dist
+
+            #val = np.array([np.array(self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)) for labda in labda_vec])
+            #R_val = val[:,0]*dist
+            #T_val = val[:,1]*dist
+            #ABS_val = val[:,2]*dist
+            #r_val = val[:,3]*dist
+            #t_val = val[:,4]*dist
+            #M_parts_val = val[:,5]
+            #Mz_val = val[:,6]
             
             Dlabda = labda_vec[1]-labda_vec[0]
             R = np.nansum(R_val)*Dlabda
@@ -512,6 +546,202 @@ class ML():
             Rerr = 0.0
             Terr = 0.0
             rerr = 0.0
+
+        return R, T, ABS, r, Rerr, Terr, rerr, t, M_parts, Mz, abs_func
+    
+    def run(self,n:Union[str,dict]='Default',d:Union[list,str]='Default',labda0:Union[str,float]='Default',FWHM:Union[str,float]='Default',option:str='numerical',steps:int=401,ang:float=0.0,pol:str='p',a:float=3) -> tuple:
+        ''' Runs the calculation to obtain R, T, total basorbed values and absoption profile 
+        
+        Args:
+            n (str/dict): Directory of refracive index functions, or 'Default' (=self.n)
+            d (str/list): List of layer thicknesses (without the first and second infinite layers), if ='Default' then it is equal to self.d
+            labda0 (str/float): Wavelength in meters, or 'Default' (=self.labda0)
+            FWHM (str/float): FWHM of the beam in meters, or 'Default' (=self.FWHM)
+            option (str): Selects beam type
+                option = CW # Calculate for labda0 only
+                option = numerical # Samples over spectrum with central wavelength labda0 and FWHM from -a*FWHM to a*FWHM around labda0. Note that when fill_value is for instance set to nan, going outsited te interpolation limits will raise an error. The spectrum is sampled over steps number of steps.
+                option = pulse # Does the same as numerical but then integrating it instead of numerically solving it #...does not work with newest version
+            steps (int): Number of samples between -a*FWHM+lambda and a*FWHM+labda (not workin when option = 'CW')
+            ang (float): Angle of incidence
+            pol (str): Polarization, eather 'p' or 's'
+            a: Selts wavelength sample range (between -a*FWHM+lambda and a*FWHM+labda) (not workin when option = 'CW')
+
+        Output:
+            tuple: tuple containing:
+                R (float): Intensity of reflection
+                T (float): Intensity of transmission
+                ABS (float): Intensity of absorption
+                r (complex): Reflection (fresnel coefficient)
+                Rerr (float): Error of R
+                Terr (float): Error of T
+                rerr (float): Error of r
+                t (complex): Transmission (fresnel coefficient)
+                M_parts (list): List of all Mjm1j @ Mj matrixes
+                Mz :...to do
+                abs_func (float function): Absorption profile versus thickens
+
+        '''
+
+        self.get_pulse(labda0=labda0,FWHM=FWHM)
+        if labda0=='Default':
+            labda0 = self.labda0
+        if FWHM=='Default':
+            FWHM = self.FWHM
+        
+        printon = self.printon
+        
+        if option=='pulse':
+            pass
+            #R_func = lambda labda: self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)[0]*self.pulse(labda)
+            #T_func = lambda labda: self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)[1]*self.pulse(labda)
+            #r_func = lambda labda: self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)[3]*self.pulse(labda)
+
+            #start = labda0 - 3*FWHM
+            #end = labda0 + 3*FWHM
+            #R, Rerr = scipy.integrate.quad(R_func,start,end)
+            #T, Terr = scipy.integrate.quad(T_func,start,end)
+            #r, rerr = scipy.integrate.quad(r_func,start,end)
+            #ABS = 1.0-T-R
+
+        elif option=='numerical':
+            labda_vec = np.linspace(labda0-a*FWHM,labda0+a*FWHM,steps)
+            dist = np.array([self.pulse(labda) for labda in labda_vec])
+            Dlabda = labda_vec[1]-labda_vec[0]
+            scale = 1.0/(np.nansum(dist)*Dlabda) # This should be 1 for plroperly sampling over lambda, but compensates for undersampling
+            self.printon = False
+            #val_names = ['R','T','ABS','r','t','M_parts','Mz']
+            #for name in val_names:
+            #    locals()[name+'_val'] = []
+
+            #for labda in labda_vec:
+            #    val = self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)
+            #    for i in range(0,len(val)):
+            #        locals()[val_names[i]+'_val'].append(val[i])
+            #
+            #for i in len(val_names):
+            #    name = val_names[i]+'_val'
+            #    if name[0]!=M:
+            #        val = locals()[val_names[i]+'_val']
+            #        locals()[val_names[i]+'_val'] = val*dist
+
+            #print(R_val)
+
+            ##val = np.array([np.array(self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)) for labda in labda_vec])
+            ##R_val = val[:,0]*dist
+            ##T_val = val[:,1]*dist
+            ##ABS_val = val[:,2]*dist
+            ##r_val = val[:,3]*dist
+            ##t_val = val[:,4]*dist
+            ##M_parts_val = val[:,5]
+            ##Mz_val = val[:,6]
+            #
+            #Dlabda = labda_vec[1]-labda_vec[0]
+            #R = np.nansum(R_val)*Dlabda
+            #T = np.nansum(T_val)*Dlabda
+            #r = np.nansum(r_val)*Dlabda
+            #t = np.nansum(t_val)*Dlabda
+            #M_parts = M_parts_val
+            #Mz = Mz_val
+            #
+            #abs_func = lambda z: self.get_multiple_abs_wf(z,Mz_val,T_val/dist,d,n,labda_vec)
+            #
+            #Rerr = np.nan
+            #Terr = np.nan
+            #rerr = np.nan
+
+            #ABS = 1.0-T-R
+
+        elif option=='CW':
+            labda_vec = np.array([labda0])
+            dist = np.array([1.0])
+
+            #R, T, ABS,r ,t, M_parts, Mz = self.calc_multilayer(labda0,n=n,d=d,ang=ang,pol=pol)
+            #abs_func = lambda z: self.get_absorption(z,Mz,T,d,self.n,labda0)
+
+            #Rerr = 0.0
+            #Terr = 0.0
+            #rerr = 0.0
+        
+        
+        
+        names = ['R', 'T', 'ABS', 'r', 'Rerr', 'Terr', 'rerr', 't', 'M_parts', 'Mz', 'abs_func']
+        out_lists = {}
+        out = {}
+        for name in names:
+            out_lists[name] = []
+            out[name] = []
+        
+        for labda in labda_vec:
+            if labda == labda0:
+                self.printon=True
+            else:
+                self.printon=False
+            R_l, T_l, ABS_l, r_l, Rerr_l, Terr_l, rerr_l, t_l, M_parts_l, Mz_l, abs_func_l = self.run_CW(n=n,d=d,labda=labda,FWHM=FWHM,steps=steps,ang=ang,pol=pol,a=a)
+            for name in names:
+                out_lists[name].append(locals()[name+'_l'])
+        
+        if option=='CW':
+            for name in names:
+                out[name] = out_lists[name][0]
+
+        elif option=='numerical':
+            for name in names:
+                val = out_lists[name]
+                
+                if name=='abs_func':
+                    #valout = lambda z: 0.0
+                    #for i in range(0,len(out[name])):
+                        #valout = lambda z: valout(z)+out[name][i](z)*dist*Dlabda
+                    valout = None
+                    pass
+                elif name in ['Mz','M_parts']:
+                    valout = val
+                else:
+                    valout = np.nansum(val*dist)*Dlabda*scale  
+                out[name] = valout
+            
+            out['abs_func'] = lambda z: self.get_multiple_abs_wf(z,out_lists['Mz'],np.array(out_lists['T']),d,n,labda_vec)
+
+        self.printon = printon # Restores setting
+
+        return out['R'], out['T'], out['ABS'], out['r'], out['Rerr'], out['Terr'], out['rerr'], out['t'], out['M_parts'], out['Mz'], out['abs_func']
+    
+
+    def run_CW(self,n:Union[str,dict]='Default',d:Union[list,str]='Default',labda:float='Default',FWHM:Union[str,float]='Default',steps:int=401,ang:float=0.0,pol:str='p',a:float=3) -> tuple:
+        ''' Runs the calculation to obtain R, T, total basorbed values and absoption profile for one wavelegth
+        
+        Args:
+            n (str/dict): Directory of refracive index functions, or 'Default' (=self.n)
+            d (str/list): List of layer thicknesses (without the first and second infinite layers), if ='Default' then it is equal to self.d
+            labda0 (str/float): Wavelength in meters, or 'Default' (=self.labda0)
+            FWHM (str/float): FWHM of the beam in meters, or 'Default' (=self.FWHM)
+            steps (int): Number of samples between -a*FWHM+lambda and a*FWHM+labda (not workin when option = 'CW')
+            ang (float): Angle of incidence
+            pol (str): Polarization, eather 'p' or 's'
+            a: Selts wavelength sample range (between -a*FWHM+lambda and a*FWHM+labda) (not workin when option = 'CW')
+
+        Output:
+            tuple: tuple containing:
+                R (float): Intensity of reflection
+                T (float): Intensity of transmission
+                ABS (float): Intensity of absorption
+                r (complex): Reflection (fresnel coefficient)
+                Rerr (float): Error of R
+                Terr (float): Error of T
+                rerr (float): Error of r
+                t (complex): Transmission (fresnel coefficient)
+                M_parts (list): List of all Mjm1j @ Mj matrixes
+                Mz :...to do
+                abs_func (float function): Absorption profile versus thickens
+
+        '''
+
+        R, T, ABS,r ,t, M_parts, Mz = self.calc_multilayer(labda,n=n,d=d,ang=ang,pol=pol)
+        abs_func = lambda z: self.get_absorption(z,Mz,T,d,self.n,labda)
+
+        Rerr = 0.0
+        Terr = 0.0
+        rerr = 0.0
 
         return R, T, ABS, r, Rerr, Terr, rerr, t, M_parts, Mz, abs_func
 
@@ -644,6 +874,12 @@ class ML():
             absorption (float): Absorption profile value at z      
 
         '''
-        val = np.array([self.get_absorption(z,Mz_val[i],T_val[i],d,n,labda_vec[i])*self.pulse(labda_vec[i])*(labda_vec[1]-labda_vec[0]) for i in range(0,len(labda_vec))])
+        dist = np.array([self.pulse(labda) for labda in labda_vec])
+        Dlabda = labda_vec[1]-labda_vec[0]
+        weights = dist*Dlabda
+        weights = weights/(np.nansum(weights))
+
+        #val = np.array([self.get_absorption(z,Mz_val[i],T_val[i],d,n,labda_vec[i])*self.pulse(labda_vec[i])*(labda_vec[1]-labda_vec[0]) for i in range(0,len(labda_vec))])
+        val = np.array([self.get_absorption(z,Mz_val[i],T_val[i],d,n,labda_vec[i])*weights[i] for i in range(0,len(labda_vec))])
         
         return np.nansum(val)

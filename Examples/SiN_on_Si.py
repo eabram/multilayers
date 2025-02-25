@@ -12,21 +12,22 @@ import multilayers
 plt.rcParams.update({'lines.markersize':5,'font.size':40,'lines.linewidth':3,'legend.fontsize':40,'axes.linewidth':2})
 
 labda0=400.0e-9 #nm
-FWHM=50.0e-9 
-option='CW'
+FWHM=20.0e-9 
+#option='CW'
+option='numerical'
 
 direct_save = os.path.dirname(__file__)+os.sep+'Figures'+os.sep
 
 header = ['dAl','R','T','a']
 
 # Si thickness
-fn = 'SiN'
+fn = 'SiN_'+option
 n=['Air','Si3N4','Si_oxide - NTVE_JAW','Si_JAW','Air'] # Materials
 
 d=[20.0e-9,4.0e-9,2000.0e-9] #Thickness of materials, except for the first and last one (they are infinite)
 #k_off = ['BK7','BK7_Cauchy']
 k_off = []
-steps = 1
+steps = 51
 ang = 0.0
 ml = multilayers.ML(n_list=n,d_list=d,labda=labda0,FWHM=FWHM,k_off=k_off,backscatter=False)
 R = lambda dsin: ml.run(d=[dsin,d[1],d[2]],option=option,steps=steps,ang=0.0,pol='p') #option: 'numerical' wil integrate over steps and 'pulse' will integrate over a incoming pulse (scipy.integrate.quad)
@@ -35,7 +36,7 @@ R = lambda dsin: ml.run(d=[dsin,d[1],d[2]],option=option,steps=steps,ang=0.0,pol
 f,ax = plt.subplots(1,1,figsize=(14,14))
 
 dsin_vec = np.linspace(1.0e-9,50.0e-9,50)
-R_vec = np.array([R(dsin) for dsin in dsin_vec])
+R_vec = np.array([R(dsin)[0:3] for dsin in dsin_vec])
 
 labels = ['R','T','a']
 
@@ -79,9 +80,9 @@ for i in range(0,len(R_abscalc)):
 ax.set_title('Absorption profile')
 ax.set_xlabel('Depth (nm)')
 ax.set_ylabel('Absorption (nm-1)')
-ax.yaxis.set_major_locator(MultipleLocator(0.002))
+#ax.yaxis.set_major_locator(MultipleLocator(0.002))
 
-fn = 'Example_absoption_profile'
+fn = 'Example_absoption_profile_'+option
 f.savefig(direct_save+fn+'.png',bbox_inches='tight')
 print('Saved: '+ direct_save+fn+'.png')
 
