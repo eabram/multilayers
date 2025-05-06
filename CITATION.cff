@@ -5,8 +5,8 @@ authors:
     given-names: Ester
     orcid: https://orcid.org/0000-0002-5119-0575
 title: "multilayers"
-version: 2.0.0
+version: 3.0.0
 identifiers:
   - type: doi
-    value:  10.5281/zenodo.15353343
+    value:  10.5281/zenodo.15353391
 date-released: 2025-05-06
