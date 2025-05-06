@@ -1,3 +1,5 @@
+[![DOI](https://sandbox.zenodo.org/badge/978992322.svg)](https://handle.stage.datacite.org/10.5072/zenodo.214554)
+
 # TMM - Transfer Matrix-method calculations
 
 The **TMM** package is a package to alculate the reflection, transmission and absorbtion (profile) of light through a flat multilayer stack.
