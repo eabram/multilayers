@@ -1,4 +1,4 @@
-[![DOI](https://sandbox.zenodo.org/badge/978992322.svg)](https://handle.stage.datacite.org/10.5072/zenodo.214554)
+[![DOI](https://zenodo.org/badge/978992322.svg)](https://doi.org/10.5281/zenodo.15353342)
 
 # TMM - Transfer Matrix-method calculations
 
